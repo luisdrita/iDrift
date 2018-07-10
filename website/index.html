@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="keywords" content="iDrift, Luis Rita, IST, warcraft12321, race, game, racing, cars, arrows, speed, turn"/>
+    <meta name="description" content="A brand new racing game."/>
+    <meta name="author" content="Luís Rita"/>
+    <meta http-equiv="content-language" content="en-US, en-UK " />
+    <meta name="copyright" content="© 2018 iDrift" />
+    <meta name="rating" content="general" />
+
+    <title>iDrift</title>
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Raleway">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.6.1/p5.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.6.1/addons/p5.dom.js"></script>
+
+    <script src="sketch.js"></script>
+
+    <style>
+
+        body{
+            font-family: "Raleway", sans-serif;
+        }
+
+        #canvasDiv {
+            border-style: solid;
+            display: block;
+            margin: auto;
+            width: 1280px;
+            height: 720px;
+            background: url('/img/background1.png') 50% 50%; /* background-position: */
+            background-size: cover;
+
+        }
+
+        footer{
+            padding:1px;
+            margin-top:0;
+            color:#ffffff;
+            background-color: #000000;
+            text-align: center;
+        }
+
+        footer p{
+            float: left;
+            width: 50%;
+            margin-left: 25%;
+        }
+
+        #socialMedia{
+            display:block;
+            float:right;
+            margin-top:1%;
+            width: 150px;
+        }
+
+        .container2 {
+            width:80%;
+            margin:auto;
+            padding: 0;
+            overflow:hidden;
+            text-align: center;
+            position: relative;
+        }
+
+    </style>
+
+</head>
+
+<body style="margin: auto;">
+
+<img src="../img/iDrift2.png" style="display: block; margin: auto; width: 200px; ">
+
+<audio id="music">
+    <source src="../sound/sanJose.mp3" type="audio/mp3">
+</audio>
+
+<audio id="carSound1">
+    <source src="../sound/carSound.mp3" type="audio/mp3">
+</audio>
+
+<audio id="carSound2">
+    <source src="../sound/carSound.mp3" type="audio/mp3">
+</audio>
+
+<div id ="canvasDiv" style="background-image: url('../img/gameBackground.png');">
+
+    <button id = "play" onclick="startGame();" style="width: 300px; height: 100px; display: block; margin: 310px auto auto auto;font-size: 40px; border-radius: 20px;background-color: black;color: white;cursor:pointer;">Start</button>
+
+    <textarea id = "playerName" onfocus="this.value = ''" maxlength="15" style="display: block; margin: auto;margin-top: 25px; text-align: center; font-size: 20px;padding-top: 20px;">Nickname</textarea>
+
+    <div style="width: 75px; height: 726px; margin-top: 310px; background-color: black; color: white;position: absolute;left: 125px;top: -110px;border-top-left-radius: 20px;border-bottom-left-radius: 20px;">
+        <img id = "pause" onclick="pauseGame()" src="../img/pause.png" style="width: 45px; display: block;margin: 300px auto auto auto; cursor: pointer;">
+        <img id = "replay" onclick="restartGame()" src="../img/replay.png" style="width: 40px; display: block; margin: 50px auto auto auto;cursor: pointer;">
+    </div>
+
+    <div style="width: 75px; height: 726px;margin-top: 310px;background-color: black;color: white;position: absolute;right: 125px;top: -110px;border-top-right-radius: 20px;border-bottom-right-radius: 20px;">
+        <img id = "sound" onclick="muteAudio()" src="../img/soundOn.png" style="width: 40px; display: block; margin: 670px auto auto auto; cursor: pointer;">
+    </div>
+
+    <script>
+
+    /* -------------------------------------- Defining Global Variables  --------------------------------------- */
+    let myGamePiece;
+    let myGamePiece2;
+    let myScore;
+    let background;
+
+    let muteAudioAux = false;
+    let pauseGameAux = false;
+
+    const music = document.getElementById("music");
+    const carSound1 = document.getElementById("carSound1");
+    const carSound2 = document.getElementById("carSound2");
+
+    let gravitySpeed1 = 0;
+    let gravitySpeed2 = 0;
+
+    let finalSpeed = 0;
+    let finalSpeed2 = 0;
+
+    let countDownAux = 0;
+    let countDownInterval;
+
+    let ctx;
+
+    const polygon = [[270,141],[291,144],[308,153],[320,161],[332,173],[343,188],[352,198],[362,208],[371,219],[381,233],[391,245],[403,254],[417,269],[430,283],[446,296],[460,311],[476,322],[488,332],[504,344],[517,353],[531,361],[544,367],[559,374],[574,382],[590,385],[606,390],[624,392],[641,393],[659,393],[676,392],[695,389],[711,384],[740,375],[760,364],[780,352],[825,319],[854,293],[883,262],[906,232],[935,194],[957,164],[976,139],[989,131],[1001,123],[1015,118],[1030,118],[1045,121],[1055,124],[1066,130],[1075,136],[1083,147],[1092,155],[1100,167],[1107,179],[1113,190],[1117,206],[1121,223],[1123,238],[1123,260],[1124,407],[1122,439],[1116,465],[1109,482],[1101,500],[1090,515],[1079,530],[1065,544],[1053,556],[1039,567],[1017,581],[996,590],[971,599],[936,604],[903,606],[874,605],[842,605],[814,602],[784,602],[750,604],[715,605],[236,608],[210,604],[199,599],[193,596],[187,593],[181,587],[175,581],[171,571],[165,559],[163,547],[161,534],[159,520],[158,252],[159,226],[166,210],[174,193],[182,182],[194,168],[209,157],[226,150],[243,144],[254,141]];
+    const polygon2 = [[2,3],[1279,2],[1278,355],[1219,354],[1216,205],[1188,125],[1156,77],[1105,41],[1043,17],[967,34],[918,63],[890,94],[831,179],[735,267],[703,287],[664,298],[628,298],[577,277],[536,244],[485,201],[443,154],[401,104],[358,69],[322,52],[265,45],[213,54],[175,67],[141,88],[115,111],[93,140],[76,171],[63,207],[61,246],[62,520],[0,519]];
+    const polygon3 = [[0,512],[0,719],[1274,717],[1277,345],[1219,342],[1218,435],[1215,469],[1197,517],[1185,546],[1166,574],[1142,602],[1115,628],[1087,651],[1062,668],[1027,683],[995,691],[952,700],[905,701],[854,700],[790,700],[232,699],[190,695],[155,685],[126,669],[101,645],[86,622],[73,593],[67,565],[64,519]];
+
+    let check = true;
+    let check2 = true;
+
+    let time;
+    let time2;
+    let name;
+
+    function startGame() {
+
+        background = new Component(1280, 720, "../img/gameBackground.png", 0, 0,"image");
+        myGamePiece = new Component(30, 50, "red", 90, 410);
+        myGamePiece2 = new Component(30, 50, "blue", 135, 410);
+        myScore = new Component("20px", "Consolas", "white", 1100, 40, "text");
+
+        const element = document.getElementsByTagName("button");
+        element[0].style.display = "none";
+
+        myGameArea.start();
+
+        music.play();
+
+        document.getElementById("playerName").style.display = "none";
+
+    }
+
+    function restartGame() {
+
+        myGameArea.stop();
+
+        /* Play Background Music */
+        if(muteAudioAux === false) {
+            music.currentTime = 0;
+            music.muted = false;
+            music.play();
+        }
+
+        /* Updating Icon */
+        document.getElementById("pause").style.width = "45px";
+        document.getElementById("pause").setAttribute("src","../img/pause.png");
+
+        /* Resetting Speed (0), Angle (0) and Position of Car 1 and 2 (x, y) */
+        myGamePiece.restart();
+        myGamePiece2.restart();
+
+        /* Countdown */
+        countDownInterval = setInterval(countDown,1000);
+
+        setTimeout(function() {myGamePiece.restart(); myGamePiece2.restart(); myGameArea.start()},4000); pauseGameAux = false;}
+
+    function countDown() {
+
+        /* Cleaning Canvas */
+        myGameArea.clear();
+
+        /* Resetting Components' Position */
+        myGamePiece.restart();
+        myGamePiece2.restart();
+
+        /* Printing Background After Cleaning */
+        background.update();
+
+        /* Defining Components' Position */
+        myGamePiece.newPos("red");
+        myGamePiece2.newPos("blue");
+
+        /* Printing Position in Canvas */
+        myGamePiece.update();
+        myGamePiece2.update();
+
+        ctx = myGameArea.context;
+        ctx.font = "100px Raleway white";
+
+        /* Individual Countdown Numbers */
+        switch (countDownAux) {
+            case 0 : ctx.fillText("3",640,360); break;
+
+            case 1: ctx.fillText("2",640,360); break;
+
+            case 2: ctx.fillText("1",640,360);
+        }
+
+        countDownAux += 1;
+
+        if (countDownAux === 3) {
+            countDownAux = 0;
+            clearInterval(countDownInterval);
+        }
+    }
+
+    function pauseGame() {
+
+        if (pauseGameAux === false) {
+            document.getElementById("pause").style.width = "30px";
+            document.getElementById("pause").setAttribute("src","../img/play.png");
+
+            pauseGameAux = true;
+            myGameArea.stop();
+            music.muted = true;
+            music.pause();
+        } else if(pauseGameAux === true) {
+            document.getElementById("pause").style.width = "45px";
+            document.getElementById("pause").setAttribute("src","../img/pause.png");
+            if(muteAudioAux === false){
+                music.muted = false;
+                music.play();
+            }
+            pauseGameAux = false;
+            myGameArea.restart();
+
+        }
+
+    }
+
+    /* Mute Function Activated on Click */
+    function muteAudio() {
+
+        if (muteAudioAux === false) {
+            document.getElementById("sound").setAttribute("src","../img/soundOff.png");
+            music.muted = true;
+            muteAudioAux = true;
+        } else if(muteAudioAux === true) {
+            document.getElementById("sound").setAttribute("src","../img/soundOn.png");
+            music.muted = false;
+            muteAudioAux = false;
+            music.play();
+        }
+    }
+
+    function isPointInPoly(point, vs) {
+
+        let x = point[0], y = point[1];
+
+        let inside = false;
+        for (let i = 0, j = vs.length - 1; i < vs.length; j = i++) {
+            let xi = vs[i][0], yi = vs[i][1];
+            let xj = vs[j][0], yj = vs[j][1];
+
+            let intersect = ((yi > y) !== (yj > y))
+                && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+            if (intersect) inside = !inside;
+        }
+
+        return inside;
+    }
+
+    /* ------------------------------------------ GAME AREA -------------------------------------------- */
+
+    let myGameArea = {
+        canvas : document.createElement("canvas"),
+        start : function() {
+            this.canvas.width = 1280;
+            this.canvas.height = 720;
+            this.context = this.canvas.getContext("2d");
+
+            const element = document.getElementsByTagName("div");
+            element[0].appendChild(this.canvas);
+
+            this.frameNo = 0;
+            this.frameNoCounter = 0;
+
+            this.interval = setInterval(updateGameArea, 20);
+
+            /* KeyDown - Event Listener */
+            window.addEventListener('keydown', function (e) {
+                e.preventDefault();
+                myGameArea.keys = (myGameArea.keys || []);
+                myGameArea.keys[e.keyCode] = (e.type === "keydown");
+            });
+
+            /* KeyUp - Event Listener */
+            window.addEventListener('keyup', function (e) {
+                myGameArea.keys[e.keyCode] = (e.type === "keydown");
+                if (e.keyCode === 38 || e.keyCode === 40) {
+
+                    carSound1.currentTime = 0;
+                }
+
+                if (e.keyCode === 87 || e.keyCode === 83) {
+
+                    carSound2.currentTime = 0;
+                }
+
+            });
+        },
+        stop : function() {
+            this.interval = clearInterval(this.interval);
+        },
+        restart : function() {
+
+            this.interval = setInterval(updateGameArea, 20);
+
+        },
+        clear : function() {
+            this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        }
+    };
+
+    /* ------------------------------------------ COMPONENT -------------------------------------------- */
+
+        function Component(width, height, color, x, y, type) {
+
+            this.type = type;
+            if (type === "image") {
+                this.image = new Image();
+                this.image.src = color;
+            }
+            this.width = width;
+            this.height = height;
+            this.speed = 0;
+            this.angle = 0;
+            this.moveAngle = 0;
+            this.x = x;
+            this.y = y;
+            this.update = function() {
+
+                ctx = myGameArea.context;
+
+                if (this.type === "text") {
+                    ctx.font = this.width + " " + this.height;
+                    ctx.fillStyle = color;
+                    ctx.fillText(this.text + " s", this.x, this.y);
+
+                }else if (type === "image"){
+
+                    ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
+
+                } else {
+
+                    ctx.save();
+                    ctx.translate(this.x, this.y);
+                    ctx.rotate(this.angle);
+                    ctx.fillStyle = color;
+                    ctx.fillRect(this.width / -2, this.height / -2, this.width, this.height);
+                    ctx.strokeStyle = "black";
+                    ctx.strokeRect(this.width / -2, this.height / -2, this.width, 5);
+                    ctx.restore();
+                }
+            };
+
+            this.newPos = function(car) {
+                this.angle += this.moveAngle * Math.PI / 180;
+                this.hitBottom();
+                this.alternativeHitBottom(car);
+/*
+                if (car === "red" && crash === false) {
+                this.x += (this.speed + gravitySpeed1) * Math.sin(this.angle);
+                this.y -= (this.speed + gravitySpeed1) * Math.cos(this.angle);
+                finalSpeed = this.speed + gravitySpeed1;
+
+                } else if (car === "blue" && crash === false) {
+                this.x += (this.speed + gravitySpeed2) * Math.sin(this.angle);
+                this.y -= (this.speed + gravitySpeed2) * Math.cos(this.angle);
+                finalSpeed2 = this.speed + gravitySpeed2;
+                }
+                */
+            };
+
+            this.hitBottom = function() {
+                const rockbottom = myGameArea.canvas.height - this.height + 20;
+                const rocktop = 30;
+                const rockleft = 30;
+                const rockright = myGameArea.canvas.width - this.width;
+
+                if (this.y > rockbottom) {
+                    this.y = rockbottom;
+                    this.speed = Math.floor(this.speed/3);
+                }
+
+                if (this.y < rocktop) {
+                    this.y = rocktop;
+                    this.speed = Math.floor(this.speed/3);
+                }
+
+                if (this.x < rockleft) {
+                    this.x = rockleft;
+                    this.speed = Math.floor(this.speed/3);
+                }
+
+                if (this.x > rockright) {
+                    this.x = rockright;
+                    this.speed = Math.floor(this.speed/3);
+                }
+
+            };
+
+            this.alternativeHitBottom = function(car) {
+
+                let auxx1 = this.x + (this.speed + gravitySpeed1) * Math.sin(this.angle);
+                let auxy1 = this.y - (this.speed + gravitySpeed1) * Math.cos(this.angle);
+
+                let auxx2 = this.x + (this.speed + gravitySpeed2) * Math.sin(this.angle);
+                let auxy2 = this.y - (this.speed + gravitySpeed2) * Math.cos(this.angle);
+
+                if (car === "red") {
+
+                    if (isPointInPoly([auxx1, auxy1], polygon) === false && isPointInPoly([auxx1, auxy1], polygon2) === false && isPointInPoly([auxx1, auxy1], polygon3) === false) {
+
+                        this.x += (this.speed + gravitySpeed1) * Math.sin(this.angle);
+                        this.y -= (this.speed + gravitySpeed1) * Math.cos(this.angle);
+                        finalSpeed = this.speed + gravitySpeed1;
+
+                    } else {
+
+                        if (isPointInPoly([this.x, auxy1], polygon) === false && isPointInPoly([this.x, auxy1], polygon2) === false && isPointInPoly([this.x, auxy1], polygon3) === false) {
+
+                            this.speed = Math.floor(this.speed / 3);
+                            this.y -= (this.speed + gravitySpeed1) * Math.cos(this.angle);
+                            finalSpeed = this.speed + gravitySpeed1;
+
+                        } else if (isPointInPoly([auxx1, this.y], polygon) === false && isPointInPoly([auxx1, this.y], polygon2) === false && isPointInPoly([auxx1, this.y], polygon3) === false) {
+
+                            this.speed = Math.floor(this.speed / 3);
+                            this.x += (this.speed + gravitySpeed1) * Math.sin(this.angle);
+                            finalSpeed = this.speed + gravitySpeed1;
+
+                        }
+                    }
+
+                } else if (car === "blue") {
+
+                    if (isPointInPoly([auxx2, auxy2], polygon) === false && isPointInPoly([auxx2, auxy2], polygon2) === false && isPointInPoly([auxx2, auxy2], polygon3) === false) {
+
+                        this.x += (this.speed + gravitySpeed2) * Math.sin(this.angle);
+                        this.y -= (this.speed + gravitySpeed2) * Math.cos(this.angle);
+                        finalSpeed2 = this.speed + gravitySpeed2;
+
+                    } else {
+
+                        if (isPointInPoly([this.x, auxy2], polygon) === false && isPointInPoly([this.x, auxy2], polygon2) === false && isPointInPoly([this.x, auxy2], polygon3) === false) {
+
+                            this.speed = Math.floor(this.speed / 3);
+                            this.y -= (this.speed + gravitySpeed2) * Math.cos(this.angle);
+                            finalSpeed2 = this.speed + gravitySpeed2;
+
+                        } else if (isPointInPoly([auxx2, this.y], polygon) === false && isPointInPoly([auxx2, this.y], polygon2) === false && isPointInPoly([auxx2, this.y], polygon3) === false) {
+
+                            this.speed = Math.floor(this.speed / 3);
+                            this.x += (this.speed + gravitySpeed2) * Math.sin(this.angle);
+                            finalSpeed2 = this.speed + gravitySpeed2;
+
+                        }
+                    }
+
+                }
+
+            };
+
+            this.restart = function () {
+
+                this.speed = 0;
+                this.angle = 0;
+                this.moveAngle = 0;
+                this.x = x;
+                this.y = y;
+
+            }
+
+        }
+
+    /* -------------------------------------- UPDATE GAME AREA  --------------------------------------- */
+
+        function updateGameArea () {
+
+            carSound1.pause();
+            carSound2.pause();
+
+            myGameArea.clear();
+
+        /* Updating Frame Number to Later Calculate Elapsed Time */
+        myGameArea.frameNo += 1;
+        myGameArea.frameNoCounter += 1;
+
+        myGamePiece.moveAngle = 0;
+        myGamePiece2.moveAngle = 0;
+
+        /* BREAK SYSTEM - Car 1 */
+        if(finalSpeed > 0) {
+        gravitySpeed1 -= 0.05;
+        finalSpeed = gravitySpeed1 + myGamePiece.speed;
+        if (finalSpeed <= 0) {
+            myGamePiece.speed = 0;
+            gravitySpeed1 = 0;
+            finalSpeed = 0;
+        }
+        } else if (finalSpeed < 0) {
+            gravitySpeed1 += 0.05;
+            finalSpeed = gravitySpeed1 + myGamePiece.speed;
+            if (finalSpeed >= 0) {
+                myGamePiece.speed = 0;
+                gravitySpeed1 = 0;
+                finalSpeed = 0;
+            }
+        }
+
+        /* BREAK SYSTEM - Car 2 */
+        if(finalSpeed2 > 0) {
+            gravitySpeed2 -= 0.05;
+            finalSpeed2 = gravitySpeed2 + myGamePiece2.speed;
+            if (finalSpeed2 <= 0) {
+                myGamePiece2.speed = 0;
+                gravitySpeed2 = 0;
+                finalSpeed2 = 0;
+            }
+        } else if (finalSpeed2 < 0) {
+            gravitySpeed2 += 0.05;
+            finalSpeed2 = gravitySpeed2 + myGamePiece2.speed;
+            if (finalSpeed2 >= 0) {
+                myGamePiece2.speed = 0;
+                gravitySpeed2 = 0;
+                finalSpeed2 = 0;
+            }
+        }
+
+        /* Car Velocity, Acceleration, Turning Angle and Motor Sound - Car 1 */
+        if (myGameArea.keys && myGameArea.keys[37] && finalSpeed !== 0) { if (finalSpeed > 2 || finalSpeed < -2) {myGamePiece.moveAngle = -4;} else {myGamePiece.moveAngle = -2;}}
+        if (myGameArea.keys && myGameArea.keys[39] && finalSpeed !== 0) { if (finalSpeed > 2 || finalSpeed < -2) {myGamePiece.moveAngle = 4;} else {myGamePiece.moveAngle = 2;}}
+        if (myGameArea.keys && myGameArea.keys[38]) {myGamePiece.speed = 2; carSound1.play(); if(gravitySpeed1 < 7){gravitySpeed1 += 0.1;}}
+        if (myGameArea.keys && myGameArea.keys[40]) {myGamePiece.speed = -2; carSound1.play(); if(gravitySpeed1 > -7){gravitySpeed1 -= 0.1;}}
+
+        /* Car Velocity, Acceleration, Turning Angle and Motor Sound - Car 2 */
+        if (myGameArea.keys && myGameArea.keys[65] && finalSpeed2 !== 0) {if (finalSpeed2 > 2 || finalSpeed2 < -2) {myGamePiece2.moveAngle = -4;} else {myGamePiece2.moveAngle = -2;}}
+        if (myGameArea.keys && myGameArea.keys[68] && finalSpeed2 !== 0) {if (finalSpeed2 > 2 || finalSpeed2 < -2) {myGamePiece2.moveAngle = 4;} else {myGamePiece2.moveAngle = 2;}}
+        if (myGameArea.keys && myGameArea.keys[87]) {myGamePiece2.speed = 2; carSound2.play(); if(gravitySpeed2 < 7){gravitySpeed2 += 0.1;}}
+        if (myGameArea.keys && myGameArea.keys[83]) {myGamePiece2.speed = -2; carSound2.play(); if(gravitySpeed2 > -7){gravitySpeed2 -= 0.1;}}
+        
+        background.update();
+
+        /* Calculating and Printing Time */
+        time = myGameArea.frameNo * 20/1000;
+        time2 = myGameArea.frameNoCounter * 20/1000;
+
+        myScore.text = "Time: " + time;
+        myScore.update();
+
+        /* Defining Components' Position */
+        myGamePiece.newPos("red");
+        myGamePiece2.newPos("blue");
+
+        /* Printing Position in Canvas */
+        myGamePiece.update();
+        myGamePiece2.update();
+
+        /* Checkpoint Reached */
+            name = document.getElementById("playerName").value;
+
+            if (myGamePiece.y < 385 && check === false && check2 === false) {
+                /*
+                let node = document.createElement("LI");
+                let textnode = document.createTextNode(name + ": " + time2 + " s");
+                node.appendChild(textnode);
+                document.getElementById("ranking").appendChild(node);
+                */
+                check = true;
+                check2 = true;
+                myGameArea.frameNoCounter = 0;
+                submitWord();
+            }
+
+            if (myGamePiece.y > 500 && myGamePiece.x < 250) {
+
+                check = false;
+
+            }
+
+            if (myGamePiece.x > 1000) {
+
+                check2 = false;
+
+            }
+
+    }
+
+    function arrowUp() {
+
+            document.getElementById("forward").style.display = "block";
+
+    }
+
+</script>
+
+</div>
+
+<div style="border: solid grey; border-radius: 15px;width: 35%; margin: 50px auto auto 125px; height: 600px; float: left; position: relative;">
+
+    <h3 style="text-align: center;color: grey;font-size: 40px;">Ranking</h3>
+
+    <ol id = "ranking" style="font-size: 20px; line-height: 50px;float: left; margin-left: 20px; margin-top: -30px;">
+
+    </ol>
+
+    <img src="../img/trophee.png" width = "200px" style="margin-right: 100px; margin-top: 120px; position: absolute; right: -100px;">
+
+</div>
+
+    <div style="border: solid grey; border-radius: 15px; width: 40%; height: 600px; margin: 50px 125px 30px auto; position: relative;">
+
+        <h3 style="text-align: center;color: grey;font-size: 40px;">Instructions</h3>
+
+        <p style="text-align: center; color: grey;"> Complete 1 lap as fast as possible. </p>
+
+        <img src="../img/arrows.png" width="250px" alt="Planets" usemap="#keyMap" style="display:block; margin: auto; margin-top: 100px;">
+
+        <div id = "forward" style="position: absolute;left: 305px; bottom: 350px"> Forward </div>
+
+        <div id = "right" style="position: absolute; left: 140px; bottom: 225px"> Turn Right </div>
+
+        <div id = "left" style="position: absolute; left: 455px; bottom: 225px"> Turn Left </div>
+
+        <div id = "backward" style="position: absolute;left: 300px; bottom: 170px"> Backward </div>
+
+        <map name="keyMap" style="display:block; margin: auto; margin-top: 100px;">
+            <area shape="rect" coords="110,93,178,25" alt="arrowUp" onmouseover="arrowUp();">
+            <area shape="rect" coords="26,103,95,173" alt="arrowDown" onmouseover="arrowDown();" onmouseout="arrowUp();">
+            <area shape="rect" coords="111,104,180,173" alt="arrowRight" onmouseover="arrowRight();" onmouseout="arrowUp();">
+            <area shape="rect" coords="194,104,263,175" alt="arrowLeft" onmouseover="arrowLeft();" onmouseout="arrowUp();">
+        </map>
+
+    </div>
+
+<footer style="margin-bottom: -250px">
+    <div class="container2">
+
+        <div style="position: absolute; top: 35%;">
+
+        <a href="http://www.reliablecounter.com" target="_blank">
+            <img src="http://www.reliablecounter.com/count.php?page=localhost:63342/iDrift/index22.html?_ijt=6nf8b8kgm4rj3e576kil3ou0mp&digit=style/plain/14/&reloads=0" alt="" title="" border="0">
+        </a>
+
+        <br />
+
+        <a href="http://fitness-trackers.org" target="_blank" style="font-family: Geneva, Arial; font-size: 9px; color: transparent; text-decoration: none;">fitbit</a>
+
+        </div>
+
+        <p>© Copyright 2018 – iDrift</p>
+        <div id = "socialMedia">
+            <a href = "https://www.facebook.com/luis.rita.12?ref=bookmarks">
+                <img src = "../img/MediaIcons/facebook.png" width="25" style="margin-right: 5%">
+            </a>
+            <a href = "https://www.linkedin.com/in/lu%C3%ADs-rita-750302122/">
+                <img src = "../img/MediaIcons/linkedin.png" width="25" style="margin-right: 5%">
+            </a>
+            <a href = "https://www.youtube.com/channel/UCO8thP6cAOJ1vB2UjYlJl4Q?view_as=subscriber">
+                <img src = "../img/MediaIcons/youtube.png" width="25" style="margin-right: 5%">
+            </a>
+            <a href = "mailto:luis20dr@gmail.com">
+                <img src = "../img/MediaIcons/gmail.png" width="25" style="margin-right: 5%">
+            </a>
+        </div>
+    </div>
+</footer>
+
+</body>
+</html>
