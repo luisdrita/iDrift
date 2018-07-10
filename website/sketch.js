@@ -77,7 +77,7 @@ function setup () {
         for (var i = 0; i < 10; i++)  {
 
             let node = document.createElement("LI");
-            let textnode = document.createTextNode(array[i] + " - " + values[i]);
+            let textnode = document.createTextNode(array[i] + " - " + values[i] + " s");
             node.appendChild(textnode);
             document.getElementById("ranking").appendChild(node);
         }
